@@ -1,0 +1,9 @@
+[package]
+name = "m1"
+version = "0.1.0"
+edition = "2018"
+
+
+[dependencies]
+common = { path = "../common"}
+m0 = { path = "../m0" }
