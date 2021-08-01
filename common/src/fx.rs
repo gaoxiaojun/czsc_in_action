@@ -60,7 +60,7 @@ impl Fx {
         self.price
     }
 
-    pub fn high(&self) -> f64 {
+    pub fn range_high(&self) -> f64 {
         if self.fx_type == FxType::Top {
             self.price
         } else {
@@ -68,7 +68,7 @@ impl Fx {
         }
     }
 
-    pub fn low(&self) -> f64 {
+    pub fn range_low(&self) -> f64 {
         if self.fx_type == FxType::Top {
             self.aux
         } else {

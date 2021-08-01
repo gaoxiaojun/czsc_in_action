@@ -145,8 +145,8 @@ mod tests {
                 f1.time() == f2.time
                     && f1.price() == f2.price
                     && f1.fx_type() == f2.ftype
-                    && f1.high() == f2.high
-                    && f1.low() == f2.low
+                    && f1.range_high() == f2.high
+                    && f1.range_low() == f2.low
             );
         }
     }

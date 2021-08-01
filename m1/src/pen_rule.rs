@@ -24,8 +24,8 @@ pub fn detect_is_pen(f1: &Fx, f2: &Fx) -> bool {
 
 // 分型包含规则，第二根Candle的最高最低作为分型区间
 pub fn fx_is_contain(lhs: &Fx, rhs: &Fx) -> bool {
-    if (lhs.fx_type == FxType::Top && lhs.low() < rhs.low() && lhs.high() < rhs.high())
-        || (lhs.fx_type == FxType::Bottom && lhs.high() > rhs.high() && lhs.low() > rhs.low())
+    if (lhs.fx_type == FxType::Top && lhs.range_low() < rhs.range_low() && lhs.range_high() < rhs.range_high())
+        || (lhs.fx_type == FxType::Bottom && lhs.range_high() > rhs.range_high() && lhs.range_low() > rhs.range_low())
     {
         true
     } else {
