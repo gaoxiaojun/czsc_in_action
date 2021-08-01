@@ -3,7 +3,6 @@ use common::point::Point;
 use rand::{distributions::Alphanumeric, Rng};
 use std::error::Error;
 use std::io::prelude::*;
-use std::path::PathBuf;
 use std::process::Command;
 use std::vec::Vec;
 use std::{env, fs::File};
