@@ -1,6 +1,7 @@
-use common::event::PenEvent;
 use crate::pen_rule::{self, MergeAction};
+use common::event::PenEvent;
 use common::fx::Fx;
+use common::point::Point;
 use common::ringbuffer::RingBuffer;
 
 // 一、寻找第一笔
@@ -133,9 +134,11 @@ impl PenDetector {
             if self.ab_is_pen() {
                 // 1.2.2
                 self.has_pen = true;
+                let from = self.window.get(0).unwrap();
+                let to = self.window.get(1).unwrap();
                 return Some(PenEvent::First(
-                    self.window.get(0).unwrap().clone(),
-                    self.window.get(1).unwrap().clone(),
+                    Point::new(from.time, from.price),
+                    Point::new(to.time, to.price),
                 ));
             }
         }
@@ -154,9 +157,11 @@ impl PenDetector {
             self.window.push(f);
             self.window.pop_front();
             self.has_pen = true;
+            let from = self.window.get(0).unwrap();
+            let to = self.window.get(1).unwrap();
             return Some(PenEvent::First(
-                self.window.get(0).unwrap().clone(),
-                self.window.get(1).unwrap().clone(),
+                Point::new(from.time, from.price),
+                Point::new(to.time, to.price),
             ));
         } else {
             // 2.2
@@ -171,9 +176,11 @@ impl PenDetector {
                     if self.ab_is_pen() {
                         // 2.2.1.1.1
                         self.has_pen = true;
+                        let from = self.window.get(0).unwrap();
+                        let to = self.window.get(1).unwrap();
                         return Some(PenEvent::First(
-                            self.window.get(0).unwrap().clone(),
-                            self.window.get(1).unwrap().clone(),
+                            Point::new(from.time, from.price),
+                            Point::new(to.time, to.price),
                         ));
                     }
                 }
@@ -200,7 +207,7 @@ impl PenDetector {
         let bc_is_pen = pen_rule::detect_is_pen(b, &f);
         if bc_is_pen {
             // 3.1
-            let c = f.clone();
+            let c = Point::new(f.time, f.price());
             self.window.pop_front();
             self.window.push(f);
             //self.ab_pen_complete_bc_pen_new();
@@ -211,7 +218,7 @@ impl PenDetector {
                 if action == MergeAction::Replace {
                     // 3.2.2.1
                     self.window.pop_back();
-                    let c = f.clone();
+                    let c = Point::new(f.time, f.price());
                     self.window.push(f);
                     //self.ab_pen_update();
                     return Some(PenEvent::UpdateTo(c));
@@ -250,7 +257,9 @@ impl PenDetector {
                 if self.bc_is_pen() {
                     // 4.1.1.1
                     self.window.pop_front();
-                    return Some(PenEvent::New(self.window.get(-1).unwrap().clone()));
+                    let end = self.window.get(-1).unwrap();
+                    let c = Point::new(end.time,end.price);
+                    return Some(PenEvent::New(c));
                 }
             }
         } else {
@@ -262,7 +271,7 @@ impl PenDetector {
                 // 4.2.2
                 self.window.pop_back();
                 self.window.pop_back();
-                let c = f.clone();
+                let c = Point::new(f.time,f.price);
                 self.window.push(f);
                 return Some(PenEvent::UpdateTo(c));
             }
@@ -307,7 +316,7 @@ mod tests {
                 if let Some(pe) = event {
                     match pe {
                         PenEvent::First(_, _) | PenEvent::New(_) => new_count += 1,
-                        _ => update_count +=  1,
+                        _ => update_count += 1,
                     }
                 }
             }

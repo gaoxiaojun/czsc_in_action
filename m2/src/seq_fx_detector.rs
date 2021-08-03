@@ -9,7 +9,7 @@ use common::ringbuffer::RingBuffer;
 
 #[derive(Debug)]
 pub struct SeqFxDetector {
-    pens: VecDeque<Point>,
+    pub pens: VecDeque<Point>,
     window: RingBuffer<Seq>,
     direction: Option<Direction>,
 }
@@ -121,10 +121,8 @@ impl SeqFxDetector {
 
     fn find_first_segment(&mut self) -> bool {
         // 查找第一个线段
-        // 判断方式通过4个分型的滑动窗口来判断
+        // 判断方式通过4个端点的滑动窗口来判断
         // 这里没有包含全部的情况，例如1-2-3-4-5-6等多个笔组成线段，
-        // TODO: 按照缠论前3笔重叠构成线段，因此如果前三笔没有构成4点高于2点是不是也算线段？
-        // 如果算，这里的第一笔检测算法就要更新，
         debug_assert!(self.direction.is_none());
         debug_assert!(self.pens.len() >= 4);
         let _1 = self.pens.len() - 1;
@@ -168,6 +166,7 @@ impl SeqFxDetector {
         None
     }
 
+    // 入口
     pub fn on_new_pen_event(&mut self, pen_event: &PenEvent) -> Option<SeqFx> {
         match pen_event {
             PenEvent::First(start, end) => {
@@ -220,6 +219,7 @@ mod tests {
                 }
             }
         }
+        println!("Pen Count {}",sfxd.pens.len());
         println!("Sfx Count {} ", count);
     }
 }
