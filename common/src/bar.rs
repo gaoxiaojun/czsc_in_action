@@ -21,3 +21,17 @@ impl Bar {
         }
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct Candle {
+    pub index:u64,
+    pub time: Time,
+    pub high: f64,
+    pub low: f64,
+}
+
+impl Candle {
+    pub fn new(index:u64, time: Time, high: f64, low: f64) -> Self {
+        Self { index,time, high, low }
+    }
+}
