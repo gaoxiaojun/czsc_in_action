@@ -1,11 +1,11 @@
 use crate::seq2::Seq;
+use colored::*;
 use common::direction::Direction;
 use common::event::{PenEvent, SegmentEvent};
 use common::fx::FxType;
 use common::point::Point;
 use common::time::Time;
 use std::collections::VecDeque;
-use colored::*;
 
 fn get_s(v: bool) -> &'static str {
     if v {
@@ -53,6 +53,7 @@ pub struct SegmentDetector {
     pub potential_state: Option<State>,
     pub state_for_case2: Option<State>,
     pub direction: Option<Direction>,
+    pub total_count: usize,
 }
 
 impl SegmentDetector {
@@ -61,7 +62,8 @@ impl SegmentDetector {
             points: VecDeque::new(),
             potential_state: None,
             state_for_case2: None,
-            direction: Some(Direction::Up),
+            direction: None,
+            total_count: 0,
         }
     }
 
@@ -74,7 +76,8 @@ impl SegmentDetector {
         let points = self.points.drain(0..end_index).collect();
         let event = SegmentEvent::New(start, end, points);
 
-        println!("{}:{}", "确认线段情况一".red(),time);
+        println!("{}:{}", "确认线段情况一".red(), time);
+        self.total_count += 1;
         // 清理工作
         self.direction = match self.potential_state.as_ref().unwrap().fx_type {
             FxType::Top => Some(Direction::Down),
@@ -107,7 +110,14 @@ impl SegmentDetector {
             debug_assert!(end2.time == self.points[end2_index - end_index].time);
             let points2 = self.points.drain(0..(end2_index - end_index)).collect();
             let new2_event = SegmentEvent::New2(start, end, end2, points, points2);
-            println!("{}-{}:{} {}", "确认线段情况二".red(), "双线段".yellow(),time, time2);
+            println!(
+                "{}-{}:{} {}",
+                "确认线段情况二".red(),
+                "双线段".yellow(),
+                time,
+                time2
+            );
+            self.total_count += 2;
             // 清理
             self.direction = match self.potential_state.as_ref().unwrap().fx_type {
                 FxType::Top => Some(Direction::Up),
@@ -120,7 +130,8 @@ impl SegmentDetector {
         } else {
             // 只能确认前一个线段成立，当前线段有缺口，继续等待反向分型确认
             let new_event = SegmentEvent::New(start, end, points);
-            println!("{}-{}:{}", "确认线段情况二".red(), "单线段".yellow(),time);
+            println!("{}-{}:{}", "确认线段情况二".red(), "单线段".yellow(), time);
+            self.total_count += 1;
             // 清理工作
             self.direction = match self.potential_state.as_ref().unwrap().fx_type {
                 FxType::Top => Some(Direction::Down),
@@ -217,7 +228,6 @@ impl SegmentDetector {
             has_gap2,
         ) {
             (true, true, true, true, false, _) => {
-                //print!("TTT TF_");
                 if self.check_fx1_is_broken() {
                     return None;
                 }
@@ -225,25 +235,19 @@ impl SegmentDetector {
             }
 
             (true, true, true, false, _, _) => {
-                //print!("TTT F__");
-                if self.check_fx1_is_broken() {
-                    return None;
-                }
+                //if self.check_fx1_is_broken() {
+                //    return None;
+                //}
                 let len = self.points.len();
                 let fx1_start = self.potential_state.as_ref().unwrap().potential_index;
                 if (len - fx1_start) % 2 == 0 {
                     self.search_fx2();
+                }else {
+                    self.check_fx1_is_broken();
                 }
             }
 
-            (true, true, false, true, _, _) => {
-                //print!("TTF T__");
-                // 无缺口，线段成立
-                unreachable!()
-            }
-
             (true, false, _, _, _, _) => {
-                //print!("TF_ ___");
                 if self.check_fx1_is_broken() {
                     return None;
                 }
@@ -251,9 +255,8 @@ impl SegmentDetector {
             }
 
             (false, _, _, _, _, _) => {
-                //print!("F__ ___");
                 let len = self.points.len();
-                if len % 2 == 0 {
+                if len % 2 == 0 || self.direction.is_none() {
                     self.search_fx1();
                 }
             }
@@ -274,7 +277,7 @@ impl SegmentDetector {
             }
 
             PenEvent::New(a) => {
-                // New事件代表新的一笔产生了，参数a是新的笔端点，但是由于该笔可能延伸，所以先处理原有的笔，然后将新的端点保存
+                // New事件代表新的一笔产生了，参数a就是旧笔的终点也是新笔开端，但是由于该笔可能延伸，所以先处理原有的笔，然后将新的端点保存
                 // 后续在UpdateTo事件里更新最后一个端点，知道新的PenEvent::New事件产生，代表该端点已经完成
                 let event = self.process();
                 self.points.push_back(a);
@@ -335,12 +338,9 @@ impl SegmentDetector {
         let mut secondary_price = self.points[secondary_index].price;
 
         let mut pos: isize = (secondary_index - 1) as isize;
-        //debug_assert!(pos % 2 == 0);
-
+        
         // 2. 找次高点或者次低点
-        let pos_end = (((start + 1) / 2) * 2) as isize;
-        debug_assert!(pos_end >= 0);
-        while pos > pos_end {
+        while pos > start as isize {
             if fx_type == FxType::Top {
                 // 这里有个特例要处理
                 if self.points[pos as usize].price > extreme_price {
@@ -578,19 +578,12 @@ mod tests {
         let mut sd = SegmentDetector::new();
 
         for pen_event in pen_events {
-            /*match pen_event {
-                PenEvent::New(p) => print!("({})", p.time),
-                PenEvent::First(p1, p2) => print!("({}-{})", p1.time, p2.time),
-                _ => {}
-            };*/
-
             let seg_event = sd.on_pen_event(pen_event);
             if seg_event.is_some() {
                 segment_events.push(seg_event.unwrap());
             }
         }
-        println!("\n{} {}", "Segment Event Count".red(), segment_events.len());
-        //assert!(segment_events.len() == 4);
+        println!("\n{}{}", "线段总数:".red(), sd.total_count);
     }
 
     #[test]
@@ -612,6 +605,6 @@ mod tests {
                 }
             }
         }
-        println!("\n{} {}", "Segment Event Count ".red(),seg_count);
+        println!("\n{}{}", "线段总数:".red(), sd.total_count);
     }
 }
