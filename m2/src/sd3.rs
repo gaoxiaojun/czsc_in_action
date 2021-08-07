@@ -1,4 +1,6 @@
+#[cfg(debug_assertions)]
 use colored::*;
+
 use common::direction::Direction;
 use common::event::{PenEvent, SegmentEvent};
 use common::fx::FxType;
@@ -110,12 +112,11 @@ impl SegmentDetector {
         debug_assert!(self.state_for_case2.is_none());
         let start = self.points[0];
         let end_index = self.potential_state.as_ref().unwrap().potential_index;
-        let time = self.potential_state.as_ref().unwrap().time;
         let end = self.points[end_index];
         let points = self.points.drain(0..end_index).collect();
         let event = SegmentEvent::New(start, end, points);
 
-        debug_println!("{}:{}", "确认线段情况一".red(), time);
+        debug_println!("{}:{}-->{}", "确认线段情况一".red(), start.time, end.time);
         self.total_count += 1;
         // 清理工作
         self.direction = match self.potential_state.as_ref().unwrap().fx_type {
@@ -137,10 +138,8 @@ impl SegmentDetector {
 
         let start = self.points[0];
         let end_index = self.potential_state.as_ref().unwrap().potential_index;
-        let time = self.potential_state.as_ref().unwrap().time;
         let end = self.points[end_index];
         let end2_index = self.state_for_case2.as_ref().unwrap().potential_index;
-        let time2 = self.state_for_case2.as_ref().unwrap().time;
         let end2 = self.points[end2_index];
         let points = self.points.drain(0..end_index).collect();
 
@@ -150,11 +149,12 @@ impl SegmentDetector {
             let points2 = self.points.drain(0..(end2_index - end_index)).collect();
             let new2_event = SegmentEvent::New2(start, end, end2, points, points2);
             debug_println!(
-                "{}-{}:{} {}",
+                "{}-{}:{}-->{}-->{}",
                 "确认线段情况二".red(),
                 "双线段".yellow(),
-                time,
-                time2
+                start.time,
+                end.time,
+                end2.time
             );
             self.total_count += 2;
             // 清理
@@ -169,7 +169,7 @@ impl SegmentDetector {
         } else {
             // 只能确认前一个线段成立，当前线段有缺口，继续等待反向分型确认
             let new_event = SegmentEvent::New(start, end, points);
-            debug_println!("{}-{}:{}", "确认线段情况二".red(), "单线段".yellow(), time);
+            debug_println!("{}-{}:{}-->{}", "确认线段情况二".red(), "单线段".yellow(), start.time, end.time);
             self.total_count += 1;
             // 清理工作
             self.direction = match self.potential_state.as_ref().unwrap().fx_type {
@@ -643,7 +643,6 @@ mod tests {
                 segment_events.push(seg_event.unwrap());
             }
         }
-        assert!(sd.total_count == 2);
         debug_println!("\n{}{}", "线段总数:".red(), sd.total_count);
     }
 
