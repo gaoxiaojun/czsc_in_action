@@ -5,7 +5,6 @@ use common::event::{PenEvent, SegmentEvent};
 use common::fx::FxType;
 use common::point::Point;
 use common::time::Time;
-use std::collections::VecDeque;
 
 fn get_s(v: bool) -> &'static str {
     if v {
@@ -49,7 +48,7 @@ impl State {
 
 #[derive(Debug)]
 pub struct SegmentDetector {
-    pub points: VecDeque<Point>,
+    pub points: Vec<Point>,
     pub potential_state: Option<State>,
     pub state_for_case2: Option<State>,
     pub direction: Option<Direction>,
@@ -59,7 +58,7 @@ pub struct SegmentDetector {
 impl SegmentDetector {
     pub fn new() -> Self {
         Self {
-            points: VecDeque::new(),
+            points: Vec::new(),
             potential_state: None,
             state_for_case2: None,
             direction: None,
@@ -271,8 +270,8 @@ impl SegmentDetector {
     pub fn on_pen_event(&mut self, pen_event: PenEvent) -> Option<SegmentEvent> {
         match pen_event {
             PenEvent::First(a, b) => {
-                self.points.push_back(a);
-                self.points.push_back(b);
+                self.points.push(a);
+                self.points.push(b);
                 None
             }
 
@@ -280,13 +279,13 @@ impl SegmentDetector {
                 // New事件代表新的一笔产生了，参数a就是旧笔的终点也是新笔开端，但是由于该笔可能延伸，所以先处理原有的笔，然后将新的端点保存
                 // 后续在UpdateTo事件里更新最后一个端点，知道新的PenEvent::New事件产生，代表该端点已经完成
                 let event = self.process();
-                self.points.push_back(a);
+                self.points.push(a);
                 event
             }
 
             PenEvent::UpdateTo(a) => {
-                self.points.pop_back();
-                self.points.push_back(a);
+                self.points.pop();
+                self.points.push(a);
                 None
             }
         }
