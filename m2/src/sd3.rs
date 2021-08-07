@@ -268,7 +268,6 @@ impl SegmentDetector {
         ) {
             (true, true, true, true, false, _) => {
                 //规则1， 测试结果是2个线段
-                /* 
                 if self.check_fx1_is_broken() {
                     return None;
                 }
@@ -277,8 +276,8 @@ impl SegmentDetector {
                 if (len - fx2_start) % 2 == 0 {
                     return self.search_fx2_confirm();
                 } 
-                */
                 
+                /* 
                 // 规则2，测试结果是4个线段
                 let len = self.points.len();
                 let fx2_start = self.state_for_case2.as_ref().unwrap().potential_index;
@@ -288,7 +287,8 @@ impl SegmentDetector {
                     if self.check_fx1_is_broken() {
                         return None;
                     }
-                }                
+                }   
+                */             
             }
 
             (true, true, true, false, _, _) => {
