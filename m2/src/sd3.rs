@@ -4,7 +4,9 @@ use common::event::{PenEvent, SegmentEvent};
 use common::fx::FxType;
 use common::point::Point;
 use common::time::Time;
+use debug_print::{debug_print, debug_println};
 
+#[cfg(debug_assertions)]
 fn get_s(v: bool) -> &'static str {
     if v {
         return "T";
@@ -15,19 +17,21 @@ fn get_s(v: bool) -> &'static str {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Seq {
-    high:f64,
-    low:f64
+    high: f64,
+    low: f64,
 }
 
 impl Seq {
-    pub fn new(from:f64, to:f64) -> Self { Self { 
-        high:f64::max(from, to),
-        low:f64::min(from, to)
-     } }
+    pub fn new(from: f64, to: f64) -> Self {
+        Self {
+            high: f64::max(from, to),
+            low: f64::min(from, to),
+        }
+    }
 
-    pub fn merge(&mut self, from:f64, to:f64, direction:Direction) -> bool {
+    pub fn merge(&mut self, from: f64, to: f64, direction: Direction) -> bool {
         let _high = f64::max(from, to);
-        let _low =f64::min(from, to);
+        let _low = f64::min(from, to);
 
         let prev_include_next = self.high > _high && self.low < _low;
         let next_include_prev = self.high < _high && self.low > _low;
@@ -40,7 +44,7 @@ impl Seq {
             Direction::Up => {
                 self.high = f64::max(self.high, _high);
                 self.low = f64::max(self.low, _low);
-            },
+            }
             Direction::Down => {
                 self.high = f64::min(self.high, _high);
                 self.low = f64::min(self.low, _low);
@@ -49,7 +53,6 @@ impl Seq {
         true
     }
 }
-
 
 #[derive(Debug, Clone, Copy)]
 pub struct State {
@@ -112,7 +115,7 @@ impl SegmentDetector {
         let points = self.points.drain(0..end_index).collect();
         let event = SegmentEvent::New(start, end, points);
 
-        println!("{}:{}", "确认线段情况一".red(), time);
+        debug_println!("{}:{}", "确认线段情况一".red(), time);
         self.total_count += 1;
         // 清理工作
         self.direction = match self.potential_state.as_ref().unwrap().fx_type {
@@ -146,7 +149,7 @@ impl SegmentDetector {
             debug_assert!(end2.time == self.points[end2_index - end_index].time);
             let points2 = self.points.drain(0..(end2_index - end_index)).collect();
             let new2_event = SegmentEvent::New2(start, end, end2, points, points2);
-            println!(
+            debug_println!(
                 "{}-{}:{} {}",
                 "确认线段情况二".red(),
                 "双线段".yellow(),
@@ -166,7 +169,7 @@ impl SegmentDetector {
         } else {
             // 只能确认前一个线段成立，当前线段有缺口，继续等待反向分型确认
             let new_event = SegmentEvent::New(start, end, points);
-            println!("{}-{}:{}", "确认线段情况二".red(), "单线段".yellow(), time);
+            debug_println!("{}-{}:{}", "确认线段情况二".red(), "单线段".yellow(), time);
             self.total_count += 1;
             // 清理工作
             self.direction = match self.potential_state.as_ref().unwrap().fx_type {
@@ -199,11 +202,11 @@ impl SegmentDetector {
     }
 
     fn check_fx1_is_broken(&mut self) -> bool {
-        print!("fx1 broken..");
+        debug_print!("check_fx1_is_broken ");
         self.potential_state.as_ref().unwrap().potential_index;
 
         if self.check_potential_point_is_broken() {
-            println!(
+            debug_println!(
                 "分型被破坏 {}",
                 self.points[self.potential_state.as_ref().unwrap().potential_index].time
             );
@@ -211,12 +214,12 @@ impl SegmentDetector {
             self.state_for_case2 = None;
             return true;
         }
-        print!("N ");
+        debug_print!("{} ", "N".green());
         false
     }
 
     pub fn process(&mut self) -> Option<SegmentEvent> {
-        print!("\n{}  ", self.points[self.points.len() - 1].time);
+        debug_print!("\n{}  ", self.points[self.points.len() - 1].time);
         let has_potential1 = self.potential_state.is_some();
 
         let has_confirm_fx1 = if self.potential_state.is_some() {
@@ -245,7 +248,7 @@ impl SegmentDetector {
             false
         };
 
-        print!(
+        debug_print!(
             "{}{}{} {}{}{} ",
             get_s(has_potential1),
             get_s(has_confirm_fx1),
@@ -254,7 +257,7 @@ impl SegmentDetector {
             get_s(has_confirm_fx2),
             get_s(has_gap2)
         );
-        print!("{:?} ", self.direction);
+        debug_print!("{:?} ", self.direction);
         match (
             has_potential1,
             has_confirm_fx1,
@@ -264,30 +267,37 @@ impl SegmentDetector {
             has_gap2,
         ) {
             (true, true, true, true, false, _) => {
-                if self.check_fx1_is_broken() {
-                    return None;
+                let len = self.points.len();
+                let fx2_start = self.state_for_case2.as_ref().unwrap().potential_index;
+                if (len - fx2_start) % 2 == 0 {
+                    return self.search_fx2_confirm();
+                } else {
+                    if self.check_fx1_is_broken() {
+                        return None;
+                    }
                 }
-                return self.search_fx2_confirm();
             }
 
             (true, true, true, false, _, _) => {
-                //if self.check_fx1_is_broken() {
-                //    return None;
-                //}
                 let len = self.points.len();
                 let fx1_start = self.potential_state.as_ref().unwrap().potential_index;
                 if (len - fx1_start) % 2 == 0 {
                     self.search_fx2();
-                }else {
+                } else {
                     self.check_fx1_is_broken();
                 }
             }
 
             (true, false, _, _, _, _) => {
-                if self.check_fx1_is_broken() {
-                    return None;
+                let len = self.points.len();
+                let fx1_start = self.potential_state.as_ref().unwrap().potential_index;
+                if (len - fx1_start) % 2 == 0 {
+                    return self.search_fx1_confirm();
+                } else {
+                    if self.check_fx1_is_broken() {
+                        return None;
+                    }
                 }
-                return self.search_fx1_confirm();
             }
 
             (false, _, _, _, _, _) => {
@@ -299,7 +309,7 @@ impl SegmentDetector {
 
             (_, _, _, _, _, _) => {}
         }
-        print!("\t");
+        debug_print!("\t");
         None
     }
 
@@ -332,7 +342,7 @@ impl SegmentDetector {
     fn find_potential_point(&self) -> Option<(FxType, usize)> {
         // 至少要6个点才能判断潜在点,且是偶数点
         // 奇数点是与线段方向不符的，不用考虑
-        let mut len = self.points.len();
+        let len = self.points.len();
 
         let current_len = if self.potential_state.is_some() {
             len - self.potential_state.as_ref().unwrap().potential_index
@@ -373,8 +383,12 @@ impl SegmentDetector {
         let mut secondary_index = potential_index - 2;
         let mut secondary_price = self.points[secondary_index].price;
 
+        if secondary_index < 1 {
+            return None;
+        }
+
         let mut pos: isize = (secondary_index - 1) as isize;
-        
+
         // 2. 找次高点或者次低点
         while pos > start as isize {
             if fx_type == FxType::Top {
@@ -431,8 +445,9 @@ impl SegmentDetector {
     }
 
     fn set_fx1(&mut self, state: Option<State>) {
-        println!(
-            "找到潜在分型fx1 {} ",
+        debug_println!(
+            "{} 潜在fx1:{} ",
+            "找到".yellow(),
             self.points[state.as_ref().unwrap().potential_index].time,
         );
         debug_assert!(self.potential_state.is_none());
@@ -440,7 +455,7 @@ impl SegmentDetector {
     }
 
     fn search_fx1(&mut self) {
-        print!("search_fx1 ");
+        debug_print!("search_fx1 ");
         let state = self.find_potential_fx(0);
 
         if state.is_some() {
@@ -462,11 +477,15 @@ impl SegmentDetector {
                 }
             }
         }
+        else {
+            debug_print!("{} ", "N".green());
+        }
     }
 
     fn set_fx2(&mut self, state: Option<State>) {
-        println!(
-            "找到潜在分型fx2 {} ",
+        debug_println!(
+            "{} 潜在fx2:{} ",
+            "找到".yellow(),
             self.points[state.as_ref().unwrap().potential_index].time,
         );
         debug_assert!(self.potential_state.is_some());
@@ -476,7 +495,7 @@ impl SegmentDetector {
         self.state_for_case2 = state;
     }
     fn search_fx2(&mut self) {
-        print!("search_fx2 ");
+        debug_print!("search_fx2 ");
         let start = self.potential_state.as_ref().unwrap().potential_index;
         let state = self.find_potential_fx(start);
         if state.is_some() {
@@ -501,7 +520,7 @@ impl SegmentDetector {
     }
 
     fn search_fx1_confirm(&mut self) -> Option<SegmentEvent> {
-        print!("search_fx1_confirm ");
+        debug_print!("search_fx1_confirm ");
         let potential_state = self.potential_state.as_mut().unwrap();
 
         let len = self.points.len();
@@ -520,20 +539,24 @@ impl SegmentDetector {
         if !merge {
             // 特征序列分型确认
             potential_state.confirm = true;
-            println!(
-                "潜在fx1分型被确认 {}",
+            debug_println!(
+                "{} 潜在fx1分型:{}",
+                "确认".yellow(),
                 self.points[potential_state.potential_index].time
             );
             if !potential_state.has_gap {
                 // 无缺口，线段成立
                 return self.post_case1_segement_comfired();
             }
+        } else {
+            debug_print!(" {} ", "N".green());
         }
+
         None
     }
 
     fn search_fx2_confirm(&mut self) -> Option<SegmentEvent> {
-        print!("search_fx2_confirm ");
+        debug_print!("search_fx2_confirm ");
         let potential_state = self.state_for_case2.as_mut().unwrap();
 
         let len = self.points.len();
@@ -552,8 +575,9 @@ impl SegmentDetector {
         if !merge {
             // 特征序列分型确认
             potential_state.confirm = true;
-            println!(
-                "潜在fx2分型被确认 {}",
+            debug_println!(
+                "{} 潜在fx2分型:{}",
+                "确认".yellow(),
                 self.points[potential_state.potential_index].time
             );
             return self.post_case2_segement_comfired();
@@ -570,7 +594,7 @@ mod tests {
     #[test]
     fn test_sd_detector() {
         // 构建复杂线段测试数据，图见线段分类实例
-        // 最终结果是线段1-4-13-16-19-22
+        // 最终结果是线段1-4-19
         let vec_pen_events = vec![
             (1, 100.0),
             (2, 200.0),
@@ -619,28 +643,113 @@ mod tests {
                 segment_events.push(seg_event.unwrap());
             }
         }
-        println!("\n{}{}", "线段总数:".red(), sd.total_count);
+        assert!(sd.total_count == 2);
+        debug_println!("\n{}{}", "线段总数:".red(), sd.total_count);
     }
 
+    #[test]
+    fn test_80_detector() {
+        // 构建复杂线段测试数据，图见线段分类实例
+        // 最终结果是线段1-4-19
+        let vec_pen_events = vec![
+            (1, 100.0),
+            (2, 50.0),
+            (3, 60.0),
+            (4, 10.0),
+            (5, 90.0),
+            (6, 50.0),
+            (7, 80.0),
+            (8, 20.0),
+            (9, 55.0),
+            (10, 45.0),
+            (11, 85.0),
+            (12, 51.0),
+            (13, 70.0),
+            (14, 1.0),
+            (15, 10.0),
+        ];
+        let mut pen_events: Vec<PenEvent> = Vec::new();
+        pen_events.push(PenEvent::First(
+            Point::new(vec_pen_events[0].0, vec_pen_events[0].1),
+            Point::new(vec_pen_events[1].0, vec_pen_events[1].1),
+        ));
+
+        for i in 2..vec_pen_events.len() {
+            let p = Point::new(vec_pen_events[i].0, vec_pen_events[i].1);
+            pen_events.push(PenEvent::New(p));
+        }
+
+        // 开始处理事件
+        let mut segment_events: Vec<SegmentEvent> = Vec::new();
+        let mut sd = SegmentDetector::new();
+
+        for pen_event in pen_events {
+            let seg_event = sd.on_pen_event(pen_event);
+            if seg_event.is_some() {
+                segment_events.push(seg_event.unwrap());
+            }
+        }
+        debug_println!("\n{}{}", "线段总数:".red(), sd.total_count);
+    }
+
+    #[test]
+    fn test_81_detector() {
+        // 构建复杂线段测试数据，图见线段分类实例
+        // 最终结果是线段1-4-19
+        let vec_pen_events = vec![
+            (1, 100.0),
+            (2, 50.0),
+            (3, 60.0),
+            (4, 10.0),
+            (5, 90.0),
+            (6, 50.0),
+            (7, 80.0),
+            (8, 20.0),
+            (9, 85.0),
+            (10, 51.0),
+            (11, 70.0),
+            (12, 1.0),
+            (13, 10.0),
+        ];
+        let mut pen_events: Vec<PenEvent> = Vec::new();
+        pen_events.push(PenEvent::First(
+            Point::new(vec_pen_events[0].0, vec_pen_events[0].1),
+            Point::new(vec_pen_events[1].0, vec_pen_events[1].1),
+        ));
+
+        for i in 2..vec_pen_events.len() {
+            let p = Point::new(vec_pen_events[i].0, vec_pen_events[i].1);
+            pen_events.push(PenEvent::New(p));
+        }
+
+        // 开始处理事件
+        let mut segment_events: Vec<SegmentEvent> = Vec::new();
+        let mut sd = SegmentDetector::new();
+
+        for pen_event in pen_events {
+            let seg_event = sd.on_pen_event(pen_event);
+            if seg_event.is_some() {
+                segment_events.push(seg_event.unwrap());
+            }
+        }
+        //assert!(sd.total_count == 1);
+        debug_println!("\n{}{}", "线段总数:".red(), sd.total_count);
+    }
     #[test]
     fn test_eurusd2021_detector() {
         let bars = load_eurusd_2021();
         let mut fd = m0::analyzer::Analyzer::new();
         let mut pd = m1::analyzer::Analyzer::new();
         let mut sd = SegmentDetector::new();
-        let mut seg_count = 0;
         for bar in &bars {
             let f = fd.on_new_bar(bar);
             if let Some(fx) = f {
                 let pen_event = pd.on_new_fractal(fx);
                 if pen_event.is_some() {
-                    let seg_event = sd.on_pen_event(pen_event.unwrap());
-                    if seg_event.is_some() {
-                        seg_count += 1;
-                    }
+                    let _ = sd.on_pen_event(pen_event.unwrap());
                 }
             }
         }
-        println!("\n{}{}", "线段总数:".red(), sd.total_count);
+        debug_println!("\n{}{}", "线段总数:".red(), sd.total_count);
     }
 }

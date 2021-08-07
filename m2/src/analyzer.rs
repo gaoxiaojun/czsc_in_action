@@ -1,6 +1,5 @@
 
 use common::event::{PenEvent, SegmentEvent};
-use common::point::Point;
 use crate::sd3::SegmentDetector;
 
 #[derive(Debug)]
