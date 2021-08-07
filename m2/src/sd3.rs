@@ -169,7 +169,13 @@ impl SegmentDetector {
         } else {
             // 只能确认前一个线段成立，当前线段有缺口，继续等待反向分型确认
             let new_event = SegmentEvent::New(start, end, points);
-            debug_println!("{}-{}:{}-->{}", "确认线段情况二".red(), "单线段".yellow(), start.time, end.time);
+            debug_println!(
+                "{}-{}:{}-->{}",
+                "确认线段情况二".red(),
+                "单线段".yellow(),
+                start.time,
+                end.time
+            );
             self.total_count += 1;
             // 清理工作
             self.direction = match self.potential_state.as_ref().unwrap().fx_type {
@@ -207,7 +213,8 @@ impl SegmentDetector {
 
         if self.check_potential_point_is_broken() {
             debug_println!(
-                "分型被破坏 {}",
+                "{}:{}",
+                "分型被破坏".yellow(),
                 self.points[self.potential_state.as_ref().unwrap().potential_index].time
             );
             self.potential_state = None;
@@ -257,7 +264,18 @@ impl SegmentDetector {
             get_s(has_confirm_fx2),
             get_s(has_gap2)
         );
-        debug_print!("{:?} ", self.direction);
+        debug_print!(
+            "{} ",
+            match self.direction {
+                None => "None",
+                Some(d) => {
+                    match d {
+                        Direction::Up => "Up",
+                        Direction::Down => "Down",
+                    }
+                }
+            }
+        );
         match (
             has_potential1,
             has_confirm_fx1,
@@ -275,9 +293,9 @@ impl SegmentDetector {
                 let fx2_start = self.state_for_case2.as_ref().unwrap().potential_index;
                 if (len - fx2_start) % 2 == 0 {
                     return self.search_fx2_confirm();
-                } 
-                
-                /* 
+                }
+
+                /*
                 // 规则2，测试结果是4个线段
                 let len = self.points.len();
                 let fx2_start = self.state_for_case2.as_ref().unwrap().potential_index;
@@ -287,8 +305,8 @@ impl SegmentDetector {
                     if self.check_fx1_is_broken() {
                         return None;
                     }
-                }   
-                */             
+                }
+                */
             }
 
             (true, true, true, false, _, _) => {
@@ -489,8 +507,7 @@ impl SegmentDetector {
                     }
                 }
             }
-        }
-        else {
+        } else {
             debug_print!("{} ", "N".green());
         }
     }
