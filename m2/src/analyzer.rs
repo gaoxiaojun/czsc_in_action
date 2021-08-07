@@ -1,28 +1,21 @@
-use crate::{seq_fx::SeqFx, seq_fx_detector::SeqFxDetector};
-use common::event::PenEvent;
+
+use common::event::{PenEvent, SegmentEvent};
 use common::point::Point;
+use crate::sd3::SegmentDetector;
 
 #[derive(Debug)]
 pub struct Analyzer {
-    sfd: SeqFxDetector,
+    sd: SegmentDetector,
 }
 
 impl Analyzer {
     pub fn new() -> Self {
         Self {
-            sfd: SeqFxDetector::new(),
+            sd: SegmentDetector::new(),
         }
     }
 
-    pub fn on_new_pen_event(&mut self, pen_event: &PenEvent) -> Option<SeqFx> {
-        self.sfd.on_new_pen_event(pen_event)
-    }
-
-    pub fn get_pens(&self)  -> Vec<Point> {
-        let mut pens:Vec<Point> = Vec::new();
-        for p in &self.sfd.pens {
-            pens.push(p.clone());
-        }
-        pens
+    pub fn on_new_pen_event(&mut self, pen_event: PenEvent) -> Option<SegmentEvent> {
+        self.sd.on_pen_event(pen_event)
     }
 }

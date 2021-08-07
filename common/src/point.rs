@@ -1,6 +1,6 @@
 use crate::time::Time;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Point {
     pub time: Time,
     pub price: f64

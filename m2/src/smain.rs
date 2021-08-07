@@ -359,9 +359,11 @@ impl SegmentDetector {
             PenEvent::New(a) => {
                 // PenEvent::New代表原有笔已经终结,但是该新笔后续还可能延伸
                 // 线段检测算法只关注已经完成的笔
-                // BUG: New(a) a 是终点也是起点
-                let event = self.process();
+                // BUG: New(a) a 是终点也是起点,所以要先push，代表前一笔完成了
+                // 下面的代码已经调整了
+                
                 self.points.push_back(a);
+                let event = self.process();
                 event
             }
 
