@@ -7,16 +7,6 @@ use common::fx::FxType;
 use common::point::Point;
 use common::time::Time;
 use debug_print::{debug_print, debug_println};
-
-#[cfg(debug_assertions)]
-fn get_s(v: bool) -> &'static str {
-    if v {
-        return "T";
-    } else {
-        return "F";
-    }
-}
-
 #[derive(Debug, Clone, Copy)]
 pub struct Seq {
     high: f64,
@@ -226,6 +216,7 @@ impl SegmentDetector {
     }
 
     pub fn process(&mut self) -> Option<SegmentEvent> {
+        debug_assert!(self.verify_point());
         debug_print!("\n{}  ", self.points[self.points.len() - 1].time);
         let has_potential1 = self.potential_state.is_some();
 
@@ -498,7 +489,6 @@ impl SegmentDetector {
                         if state.as_ref().unwrap().fx_type == FxType::Top {
                             self.set_fx1(state);
                         }
-                        // 忽略底分型
                     }
                     Direction::Down => {
                         if state.as_ref().unwrap().fx_type == FxType::Bottom {
@@ -537,7 +527,6 @@ impl SegmentDetector {
                         if state.as_ref().unwrap().fx_type == FxType::Bottom {
                             self.set_fx2(state);
                         }
-                        // 忽略底分型
                     }
                     Direction::Down => {
                         if state.as_ref().unwrap().fx_type == FxType::Top {
@@ -614,7 +603,39 @@ impl SegmentDetector {
         }
         None
     }
+
+    #[cfg(debug_assertions)]
+    fn verify_point(&self)-> bool {
+        // 校验输入的数据，确保数据点是高低错落形式的
+        let len = self.points.len();
+        if len < 3 {
+            return true;
+        }
+
+        let p1 = self.points[len-1];
+        let p2 = self.points[len-2];
+        let p3 = self.points[len -3];
+
+        let is_down = p1.price < p2.price && p2.price > p3.price;
+        let is_up = p1.price > p2.price && p3.price > p2.price;
+
+        if is_down || is_up {
+            return true;
+        }
+        false
+    }
 }
+
+// helper utils
+#[cfg(debug_assertions)]
+fn get_s(v: bool) -> &'static str {
+    if v {
+        return "T";
+    } else {
+        return "F";
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
