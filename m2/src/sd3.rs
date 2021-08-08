@@ -1,3 +1,12 @@
+//！ 线段判别
+//!  本文件实现缠论第71课中描述的线段当下判别规则
+//!
+//！ 基于特征序列的线段划分标准方法主要步骤：
+//！ 先根据线段方向，找出特征序列，然后对特征序列进行标准化，寻找标准特征序列的分型，
+//!  然后判断分型第1,2元素间是否有缺口，分为第一种破坏和第二种破坏；
+//！ 第一种破坏比较简单直接，当即可断定线段结束；
+//！ 第二种破坏则需要寻找反向特征序列的分型来进行确认，如果没有出现反向特征序列分型就新高新低，则仍为原线段的延续。
+
 #[cfg(debug_assertions)]
 use colored::*;
 
@@ -7,6 +16,8 @@ use common::fx::FxType;
 use common::point::Point;
 use common::time::Time;
 use debug_print::{debug_print, debug_println};
+
+// Seq为特征序列
 #[derive(Debug, Clone, Copy)]
 pub struct Seq {
     high: f64,
@@ -21,6 +32,7 @@ impl Seq {
         }
     }
 
+    // 特征序列合并
     pub fn merge(&mut self, from: f64, to: f64, direction: Direction) -> bool {
         let _high = f64::max(from, to);
         let _low = f64::min(from, to);
@@ -46,15 +58,19 @@ impl Seq {
     }
 }
 
+// 特征序列分型信息
 #[derive(Debug, Clone, Copy)]
 pub struct State {
-    time: Time,
-    price: f64,
-    potential_index: usize,
-    fx_type: FxType,
-    has_gap: bool,
-    k2: Seq,
-    confirm: bool,
+    time: Time, // 分型极值点对应的时间，可省略
+    price: f64, // 分型极值点的价格，可省略
+
+    potential_index: usize, // 分型极值点在Point数组中的索引
+    fx_type: FxType,        // 分型类型，顶或底
+    has_gap: bool,          // 第一、第二特征序列是否有缺口
+    k2: Seq,                // 第二特征序列，不需要保存第一、第三特征序列
+    // 潜在分界点查找的过程中，通过次高点的查找，确保了第一第二特征序列不会重合
+    // 第三特征序列只要判别与第二不重合就可，因此也不用保存第三特征序列
+    confirm: bool, // 分型成立标志，等第三特征序列与第二特征序列不重合时，判定分型成立
 }
 
 impl State {
@@ -80,11 +96,11 @@ impl State {
 
 #[derive(Debug)]
 pub struct SegmentDetector {
-    pub points: Vec<Point>,
-    pub potential_state: Option<State>,
-    pub state_for_case2: Option<State>,
-    pub direction: Option<Direction>,
-    pub total_count: usize,
+    pub points: Vec<Point>,             // 笔对应的点数组，索引0代表线段的起点
+    pub potential_state: Option<State>, // 潜在分界点的分型信息
+    pub state_for_case2: Option<State>, // 反向分型信息
+    pub direction: Option<Direction>,   // 线段方向，初始时候是无方向的
+    pub total_count: usize,             // 检测到的线段总数，可省略
 }
 
 impl SegmentDetector {
@@ -98,6 +114,7 @@ impl SegmentDetector {
         }
     }
 
+    // 当情况一确认时调用该函数，函数生成事件并清理内部状态
     fn post_case1_segement_comfired(&mut self) -> Option<SegmentEvent> {
         debug_assert!(self.state_for_case2.is_none());
         let start = self.points[0];
@@ -108,6 +125,7 @@ impl SegmentDetector {
 
         debug_println!("{}:{}-->{}", "确认线段情况一".red(), start.time, end.time);
         self.total_count += 1;
+
         // 清理工作
         self.direction = match self.potential_state.as_ref().unwrap().fx_type {
             FxType::Top => Some(Direction::Down),
@@ -118,6 +136,7 @@ impl SegmentDetector {
         Some(event)
     }
 
+    // 当情况二确认时调用该函数，函数根据有无缺口生成事件并清理内部状态
     fn post_case2_segement_comfired(&mut self) -> Option<SegmentEvent> {
         debug_assert!(self.potential_state.is_some());
         debug_assert!(self.state_for_case2.is_some());
@@ -182,6 +201,8 @@ impl SegmentDetector {
         Some(event)
     }
 
+    // 检查潜在分型是否被破坏
+    // 第二种破坏则需要寻找反向特征序列的分型来进行确认，如果没有出现反向特征序列分型就新高新低，则仍为原线段的延续。
     fn check_potential_point_is_broken(&self) -> bool {
         let state = self.potential_state.as_ref().unwrap();
 
@@ -199,7 +220,7 @@ impl SegmentDetector {
 
     fn check_fx1_is_broken(&mut self) -> bool {
         debug_print!("check_fx1_is_broken ");
-        
+
         if self.check_potential_point_is_broken() {
             debug_println!(
                 "{}:{}",
@@ -214,6 +235,7 @@ impl SegmentDetector {
         false
     }
 
+    // 主处理函数
     pub fn process(&mut self) -> Option<SegmentEvent> {
         debug_assert!(self.verify_point());
         debug_print!("\n{}  ", self.points[self.points.len() - 1].time);
@@ -275,10 +297,12 @@ impl SegmentDetector {
             has_gap2,
         ) {
             (true, true, true, true, false, _) => {
-                //规则1， 测试结果是2个线段
+                // 规则1， test_sd_detector测试结果是2个线段
+                // 这个规则更符合缠论原文
                 if self.check_fx1_is_broken() {
                     return None;
                 }
+
                 let len = self.points.len();
                 let fx2_start = self.state_for_case2.as_ref().unwrap().potential_index;
                 if (len - fx2_start) % 2 == 0 {
@@ -286,7 +310,7 @@ impl SegmentDetector {
                 }
 
                 /*
-                // 规则2，测试结果是4个线段
+                // 规则2，test_sd_detector测试结果是4个线段
                 let len = self.points.len();
                 let fx2_start = self.state_for_case2.as_ref().unwrap().potential_index;
                 if (len - fx2_start) % 2 == 0 {
@@ -315,9 +339,7 @@ impl SegmentDetector {
                 if (len - fx1_start) % 2 == 0 {
                     return self.search_fx1_confirm();
                 } else {
-                    if self.check_fx1_is_broken() {
-                        return None;
-                    }
+                    self.check_fx1_is_broken();
                 }
             }
 
@@ -361,8 +383,7 @@ impl SegmentDetector {
 
     // 在最后5个点中，查找潜在的分界点
     fn find_potential_point(&self) -> Option<(FxType, usize)> {
-        // 至少要6个点才能判断潜在点,且是偶数点
-        // 奇数点是与线段方向不符的，不用考虑
+        // 判断潜在分界点,且是偶数点，奇数点是与线段方向不符的，不用考虑
         let len = self.points.len();
 
         let current_len = if self.potential_state.is_some() {
@@ -390,7 +411,10 @@ impl SegmentDetector {
         None
     }
 
-    // 从start开始，查找分型
+    // 查找潜在分型
+    // start为开始点索引,查找第一分型序列，start = 0. 查找反向分型序列，start = 第一分型的potential_index
+    // 函数只有在与查找方向同向的点调用才有意义,既 index %2 == 0
+    // 找到潜在点时候，查找次高次低点，通过次高次低点与潜在点的比较确定有无缺口
     fn find_potential_fx(&self, start: usize) -> Option<State> {
         // 1. 找潜在点
         let result = self.find_potential_point();
@@ -436,6 +460,7 @@ impl SegmentDetector {
         }
 
         let time = self.points[potential_index].time;
+
         // update has_gap flag
         let to_price = self.points[potential_index + 1].price;
 
@@ -475,6 +500,7 @@ impl SegmentDetector {
         self.potential_state = state;
     }
 
+    // 查找与线段方向同向的潜在分界点分型，对于向上线段查找顶分型，向下线段查找底分型
     fn search_fx1(&mut self) {
         debug_print!("search_fx1 ");
         let state = self.find_potential_fx(0);
@@ -513,6 +539,8 @@ impl SegmentDetector {
         );
         self.state_for_case2 = state;
     }
+
+    // 当特征序列有缺口的时候，查找与潜在分型相反的分型
     fn search_fx2(&mut self) {
         debug_print!("search_fx2 ");
         let start = self.potential_state.as_ref().unwrap().potential_index;
@@ -537,6 +565,9 @@ impl SegmentDetector {
         }
     }
 
+    // 测试潜在分界点分型是否成立
+    // 如果分型成立且无缺口，代表线段成立，返回对应的线段事件
+    // 如果分型成立且有缺口，设置状态，后续等待反向分型成立
     fn search_fx1_confirm(&mut self) -> Option<SegmentEvent> {
         debug_print!("search_fx1_confirm ");
         let potential_state = self.potential_state.as_mut().unwrap();
@@ -573,6 +604,8 @@ impl SegmentDetector {
         None
     }
 
+    // 测试反向分型是否成立
+    // 如果反向分型成立，根据有无缺口，返回对应的线段事件
     fn search_fx2_confirm(&mut self) -> Option<SegmentEvent> {
         debug_print!("search_fx2_confirm ");
         let potential_state = self.state_for_case2.as_mut().unwrap();
@@ -604,16 +637,16 @@ impl SegmentDetector {
     }
 
     #[cfg(debug_assertions)]
-    fn verify_point(&self)-> bool {
+    fn verify_point(&self) -> bool {
         // 校验输入的数据，确保数据点是高低错落形式的
         let len = self.points.len();
         if len < 3 {
             return true;
         }
 
-        let p1 = self.points[len-1];
-        let p2 = self.points[len-2];
-        let p3 = self.points[len -3];
+        let p1 = self.points[len - 1];
+        let p2 = self.points[len - 2];
+        let p3 = self.points[len - 3];
 
         let is_down = p1.price < p2.price && p2.price > p3.price;
         let is_up = p1.price > p2.price && p3.price > p2.price;
@@ -634,7 +667,6 @@ fn get_s(v: bool) -> &'static str {
         return "F";
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -681,7 +713,7 @@ mod tests {
             pen_events.push(PenEvent::New(p));
         }
 
-        assert!(pen_events.len() == 22);
+        assert!(pen_events.len() == 22);    // 第一个事件包含了两个端点
 
         // 开始处理事件
         let mut segment_events: Vec<SegmentEvent> = Vec::new();
@@ -693,12 +725,13 @@ mod tests {
                 segment_events.push(seg_event.unwrap());
             }
         }
+        debug_assert!(sd.total_count == 2 || sd.total_count == 3);  // 不同的规则返回的线段数量不同
         debug_println!("\n{}{}", "线段总数:".red(), sd.total_count);
     }
 
     #[test]
     fn test_80_detector() {
-        // 构建复杂线段测试数据，图见线段分类实例
+        // 构建复杂线段测试数据，图见复杂线段集中营
         // 最终结果是线段1-4-19
         let vec_pen_events = vec![
             (1, 100.0),
@@ -743,8 +776,10 @@ mod tests {
 
     #[test]
     fn test_81_detector() {
-        // 构建复杂线段测试数据，图见线段分类实例
+        // 构建复杂线段测试数据，图见复杂线段集中营
+        // 被测试的结果与缠师给出的结果不同
         // 最终结果是线段1-4-19
+        // 缠师给出的结果就是一个线段
         let vec_pen_events = vec![
             (1, 100.0),
             (2, 50.0),
@@ -784,6 +819,7 @@ mod tests {
         //assert!(sd.total_count == 1);
         debug_println!("\n{}{}", "线段总数:".red(), sd.total_count);
     }
+    
     #[test]
     fn test_eurusd2021_detector() {
         let bars = load_eurusd_2021();
