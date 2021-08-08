@@ -199,8 +199,7 @@ impl SegmentDetector {
 
     fn check_fx1_is_broken(&mut self) -> bool {
         debug_print!("check_fx1_is_broken ");
-        self.potential_state.as_ref().unwrap().potential_index;
-
+        
         if self.check_potential_point_is_broken() {
             debug_println!(
                 "{}:{}",
