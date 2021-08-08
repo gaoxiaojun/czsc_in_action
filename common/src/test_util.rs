@@ -1,9 +1,15 @@
 use chrono::prelude::*;
 use crate::bar::Bar;
 use csv;
+use crate::time::Time;
 
 pub fn load_eurusd_2021() -> Vec<Bar> {
     let csv = include_str!("../data/EU_2021.csv");
+    load_datetime_bar(&csv)
+}
+
+pub fn load_eurusd_2021_0712() -> Vec<Bar> {
+    let csv = include_str!("../data/EU_0712.csv");
     load_datetime_bar(&csv)
 }
 
@@ -23,7 +29,7 @@ pub fn load_datetime_bar(csv: &str) -> Vec<Bar> {
         let low = AsRef::<str>::as_ref(&record[3]).parse::<f64>().unwrap();
         let close = AsRef::<str>::as_ref(&record[4]).parse::<f64>().unwrap();
         let _vol = AsRef::<str>::as_ref(&record[5]).parse::<f64>().unwrap();
-        let bar = Bar::new(time, open, high, low, close);
+        let bar = Bar::new(Time::new(time), open, high, low, close);
         bars.push(bar);
     }
     bars

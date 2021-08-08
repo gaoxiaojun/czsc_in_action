@@ -316,7 +316,7 @@ impl SegmentDetector {
             (true, true, true, true, false, _) => {
                 // 规则1， test_sd_detector测试结果是2个线段
                 // 这个规则更符合缠论原文
-                if self.check_fx1_is_broken() {
+                /*if self.check_fx1_is_broken() {
                     return None;
                 }
 
@@ -324,9 +324,9 @@ impl SegmentDetector {
                 let fx2_start = self.state_for_case2.as_ref().unwrap().potential_index;
                 if (len - fx2_start) % 2 == 0 {
                     return self.search_fx2_confirm();
-                }
+                }*/
 
-                /*
+                
                 // 规则2，test_sd_detector测试结果是4个线段
                 let len = self.points.len();
                 let fx2_start = self.state_for_case2.as_ref().unwrap().potential_index;
@@ -337,7 +337,7 @@ impl SegmentDetector {
                         return None;
                     }
                 }
-                */
+                
             }
 
             (true, true, true, false, _, _) => {
@@ -417,8 +417,8 @@ impl SegmentDetector {
         let p2 = &self.points[len - 3];
         let p1 = &self.points[len - 5];
 
-        let is_top = p1.price < p2.price && p2.price > p3.price;
-        let is_bottom = p1.price > p2.price && p2.price < p3.price;
+        let is_top = p1.price <= p2.price && p2.price >= p3.price;
+        let is_bottom = p1.price >= p2.price && p2.price <= p3.price;
 
         if is_top || is_bottom {
             let direction = if is_top { FxType::Top } else { FxType::Bottom };
@@ -721,12 +721,12 @@ mod tests {
         ];
         let mut pen_events: Vec<PenEvent> = Vec::new();
         pen_events.push(PenEvent::First(
-            Point::new(vec_pen_events[0].0, vec_pen_events[0].1),
-            Point::new(vec_pen_events[1].0, vec_pen_events[1].1),
+            Point::new(Time::new(vec_pen_events[0].0), vec_pen_events[0].1),
+            Point::new(Time::new(vec_pen_events[1].0), vec_pen_events[1].1),
         ));
 
         for i in 2..vec_pen_events.len() {
-            let p = Point::new(vec_pen_events[i].0, vec_pen_events[i].1);
+            let p = Point::new(Time::new(vec_pen_events[i].0), vec_pen_events[i].1);
             pen_events.push(PenEvent::New(p));
         }
 
@@ -769,12 +769,12 @@ mod tests {
         ];
         let mut pen_events: Vec<PenEvent> = Vec::new();
         pen_events.push(PenEvent::First(
-            Point::new(vec_pen_events[0].0, vec_pen_events[0].1),
-            Point::new(vec_pen_events[1].0, vec_pen_events[1].1),
+            Point::new(Time::new(vec_pen_events[0].0), vec_pen_events[0].1),
+            Point::new(Time::new(vec_pen_events[1].0), vec_pen_events[1].1),
         ));
 
         for i in 2..vec_pen_events.len() {
-            let p = Point::new(vec_pen_events[i].0, vec_pen_events[i].1);
+            let p = Point::new(Time::new(vec_pen_events[i].0), vec_pen_events[i].1);
             pen_events.push(PenEvent::New(p));
         }
 
@@ -814,12 +814,12 @@ mod tests {
         ];
         let mut pen_events: Vec<PenEvent> = Vec::new();
         pen_events.push(PenEvent::First(
-            Point::new(vec_pen_events[0].0, vec_pen_events[0].1),
-            Point::new(vec_pen_events[1].0, vec_pen_events[1].1),
+            Point::new(Time::new(vec_pen_events[0].0), vec_pen_events[0].1),
+            Point::new(Time::new(vec_pen_events[1].0), vec_pen_events[1].1),
         ));
 
         for i in 2..vec_pen_events.len() {
-            let p = Point::new(vec_pen_events[i].0, vec_pen_events[i].1);
+            let p = Point::new(Time::new(vec_pen_events[i].0), vec_pen_events[i].1);
             pen_events.push(PenEvent::New(p));
         }
 

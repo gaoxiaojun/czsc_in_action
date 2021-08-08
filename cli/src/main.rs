@@ -1,8 +1,8 @@
-use common::{event::SegmentEvent, point::Point, test_util::load_eurusd_2021};
+use common::{event::SegmentEvent, point::Point, test_util::*};
 use plot::plot::TVPlot;
 
 fn main() {
-    let bars = load_eurusd_2021();
+    let bars = load_eurusd_2021_0712();
     let mut fd = m0::analyzer::Analyzer::new();
     let mut pd = m1::analyzer::Analyzer::new();
     let mut sd = m2::analyzer::Analyzer::new();

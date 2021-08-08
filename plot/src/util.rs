@@ -23,7 +23,7 @@ pub fn rand_name() -> String {
 fn render_bar_tradingview(bar: &Bar) -> String {
     format!(
         "{{ time:{}, open:{}, high:{}, low:{}, close:{} }}",
-        bar.time / 1000,
+        bar.time.as_i64() / 1000,
         bar.open,
         bar.high,
         bar.low,
@@ -32,7 +32,7 @@ fn render_bar_tradingview(bar: &Bar) -> String {
 }
 
 fn render_point_tradingview(point: &Point) -> String {
-    format!("{{ time:{}, value: {} }}", point.time / 1000, point.price)
+    format!("{{ time:{}, value: {} }}", point.time.as_i64() / 1000, point.price)
 }
 
 fn render_bars_tradingview(bars: &Vec<Bar>, pens: &Vec<Point>, segments: &Vec<Point>) -> String {

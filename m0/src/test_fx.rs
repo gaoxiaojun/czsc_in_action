@@ -43,7 +43,7 @@ pub mod tests {
             let price = AsRef::<str>::as_ref(&record[2]).parse::<f64>().unwrap();
             let high = AsRef::<str>::as_ref(&record[3]).parse::<f64>().unwrap();
             let low = AsRef::<str>::as_ref(&record[4]).parse::<f64>().unwrap();
-            let fx = CsvFx::new(time,ftype,price,high,low);
+            let fx = CsvFx::new(Time::new(time),ftype,price,high,low);
             fxs.push(fx);
         }
         fxs
