@@ -636,7 +636,7 @@ impl SegmentDetector {
         None
     }
 
-    #[cfg(debug_assertions)]
+    //#[cfg(debug_assertions)]
     fn verify_point(&self) -> bool {
         // 校验输入的数据，确保数据点是高低错落形式的
         let len = self.points.len();

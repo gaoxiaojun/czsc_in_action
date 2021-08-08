@@ -2,13 +2,11 @@ use chrono::prelude::*;
 use crate::bar::Bar;
 use csv;
 
-#[cfg(debug_assertions)]
 pub fn load_eurusd_2021() -> Vec<Bar> {
     let csv = include_str!("../data/EU_2021.csv");
     load_datetime_bar(&csv)
 }
 
-#[cfg(debug_assertions)]
 pub fn load_datetime_bar(csv: &str) -> Vec<Bar> {
     let mut bars: Vec<Bar> = Vec::new();
     let mut reader = csv::ReaderBuilder::new()
