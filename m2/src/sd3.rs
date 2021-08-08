@@ -101,6 +101,7 @@ pub struct SegmentDetector {
     pub state_for_case2: Option<State>, // 反向分型信息
     pub direction: Option<Direction>,   // 线段方向，初始时候是无方向的
     pub total_count: usize,             // 检测到的线段总数，可省略
+    pub is_first_segment:bool,
 }
 
 impl SegmentDetector {
@@ -111,16 +112,32 @@ impl SegmentDetector {
             state_for_case2: None,
             direction: None,
             total_count: 0,
+            is_first_segment:true
         }
+    }
+
+    fn check_is_first_segment(&mut self, points: &mut Vec<Point>) -> Point {
+        let mut start = points[0];
+        if self.is_first_segment {
+            let event_points_len = points.len();
+            if event_points_len % 2 == 0 {
+                points.remove(0);
+                start = points[0];
+            }
+            self.is_first_segment = false;
+        }
+        start
     }
 
     // 当情况一确认时调用该函数，函数生成事件并清理内部状态
     fn post_case1_segement_comfired(&mut self) -> Option<SegmentEvent> {
         debug_assert!(self.state_for_case2.is_none());
-        let start = self.points[0];
+        //let start = self.points[0];
         let end_index = self.potential_state.as_ref().unwrap().potential_index;
         let end = self.points[end_index];
-        let points = self.points.drain(0..end_index).collect();
+        let mut points:Vec<Point> = self.points.drain(0..end_index).collect();
+        let start = self.check_is_first_segment(&mut points);
+
         let event = SegmentEvent::New(start, end, points);
 
         debug_println!("{}:{}-->{}", "确认线段情况一".red(), start.time, end.time);
@@ -145,12 +162,12 @@ impl SegmentDetector {
                 != self.state_for_case2.as_ref().unwrap().fx_type
         );
 
-        let start = self.points[0];
         let end_index = self.potential_state.as_ref().unwrap().potential_index;
         let end = self.points[end_index];
         let end2_index = self.state_for_case2.as_ref().unwrap().potential_index;
         let end2 = self.points[end2_index];
-        let points = self.points.drain(0..end_index).collect();
+        let mut points = self.points.drain(0..end_index).collect();
+        let start= self.check_is_first_segment(&mut points);
 
         let event = if !self.state_for_case2.as_ref().unwrap().has_gap {
             // 同时确认两个线段
