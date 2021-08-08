@@ -1,3 +1,6 @@
+//! 分型判别
+//! 本文件实现了分型判别规则
+
 use crate::candle::Candle;
 use common::bar::Bar;
 use common::fx::*;
