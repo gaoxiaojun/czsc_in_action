@@ -417,8 +417,8 @@ impl SegmentDetector {
         let p2 = &self.points[len - 3];
         let p1 = &self.points[len - 5];
 
-        let is_top = p1.price <= p2.price && p2.price >= p3.price;
-        let is_bottom = p1.price >= p2.price && p2.price <= p3.price;
+        let is_top = p1.price <= p2.price && p2.price > p3.price;
+        let is_bottom = p1.price >= p2.price && p2.price < p3.price;
 
         if is_top || is_bottom {
             let direction = if is_top { FxType::Top } else { FxType::Bottom };
