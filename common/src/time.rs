@@ -20,6 +20,6 @@ impl Time {
 impl Display for Time {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let datetime = Utc.timestamp_millis(self.time);
-        datetime.fmt(f)
+        datetime.format("%Y-%m-%d %H:%M").fmt(f)
     }
 }

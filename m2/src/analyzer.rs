@@ -1,16 +1,16 @@
 
 use common::event::{PenEvent, SegmentEvent};
-use crate::sd3::SegmentDetector;
+use crate::sd::SegmentDetectorV2;
 
 #[derive(Debug)]
 pub struct Analyzer {
-    sd: SegmentDetector,
+    sd: SegmentDetectorV2,
 }
 
 impl Analyzer {
     pub fn new() -> Self {
         Self {
-            sd: SegmentDetector::new(),
+            sd: SegmentDetectorV2::new(),
         }
     }
 

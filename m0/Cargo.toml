@@ -7,5 +7,6 @@ edition = "2018"
 common = {path = "../common"}
 chrono = "0.4.19"
 csv = "1.1"
+rust_decimal="1.15.0"
 
 [dev-dependencies]

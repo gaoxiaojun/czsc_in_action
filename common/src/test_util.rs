@@ -8,10 +8,21 @@ pub fn load_eurusd_2021() -> Vec<Bar> {
     load_datetime_bar(&csv)
 }
 
+pub fn load_eurusd_2021_06() -> Vec<Bar> {
+    let csv = include_str!("../data/EU_06.csv");
+    load_datetime_bar(&csv)
+}
+
 pub fn load_eurusd_2021_0712() -> Vec<Bar> {
     let csv = include_str!("../data/EU_0712.csv");
     load_datetime_bar(&csv)
 }
+
+pub fn load_eurusd_2021_0707() -> Vec<Bar> {
+    let csv = include_str!("../data/EU_2021_0707.csv");
+    load_datetime_bar(&csv)
+}
+
 
 pub fn load_datetime_bar(csv: &str) -> Vec<Bar> {
     let mut bars: Vec<Bar> = Vec::new();
