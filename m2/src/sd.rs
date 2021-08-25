@@ -363,7 +363,7 @@ impl SegmentDetectorV2 {
 
     fn recalc_seq1(&mut self) {
         self.w1.clear();
-        for index in 1..self.raw_points.len() - 1 {
+        for index in 1..self.raw_points.len(){
             if index % 2 == 0 {
                 let from = &self.raw_points[index - 1];
                 let to = &self.raw_points[index];
@@ -376,7 +376,7 @@ impl SegmentDetectorV2 {
         debug_assert!(self.potencial_fx.is_some());
         self.w2.clear();
         let start_index = self.potencial_fx.as_ref().unwrap().k2.from_index + 1;
-        for index in start_index..self.raw_points.len() - 1 {
+        for index in start_index..self.raw_points.len() {
             let from = &self.raw_points[index - 1];
             let to = &self.raw_points[index];
             let direction = if from.price > to.price {
