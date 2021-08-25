@@ -13,7 +13,7 @@ struct Opt {
 fn main() {
     let opt = Opt::from_args();
 
-    let bars = load_eurusd_2021();
+    let bars = load_eurusd_2021_05_06();
     let mut fd = m0::analyzer::Analyzer::new();
     let mut pd = m1::analyzer::Analyzer::new();
     let mut sd = m2::analyzer::Analyzer::new();
