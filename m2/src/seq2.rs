@@ -14,7 +14,6 @@ pub enum Relationship {
 #[derive(Debug, Clone, Copy)]
 pub struct Seq {
     pub from_index: usize,
-    pub to_index: usize,
     pub from: Point,
     pub to: Point,
     pub direction: Direction,
@@ -26,7 +25,6 @@ impl Seq {
     pub fn new(from_index: usize, from: &Point, to: &Point) -> Self {
         Self {
             from_index,
-            to_index: from_index + 1,
             from: from.clone(),
             to: to.clone(),
             direction: if from.price - to.price > 0.0 {
@@ -70,12 +68,10 @@ impl Seq {
             Relationship::PrevIncludeNext => {
                 self.pin = true;
                 self.to = rhs.to;
-                self.to_index = rhs.to_index;
             }
             Relationship::NextIncludePrev => {
                 self.nip = true;
                 self.from = rhs.from;
-                self.from_index = rhs.from_index;
             }
 
             _ => {}

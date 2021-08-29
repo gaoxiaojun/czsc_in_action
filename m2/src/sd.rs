@@ -179,7 +179,7 @@ impl SegmentDetectorV2 {
 
                     // 清理
                     let _ = self.raw_points.drain(..fx.k2.from_index);
-                    self.w1.clear();
+                    //self.w1.clear();
                     self.direction = match self.direction.unwrap() {
                         Direction::Down => Some(Direction::Up),
                         Direction::Up => Some(Direction::Down),
@@ -288,7 +288,7 @@ impl SegmentDetectorV2 {
                     let fx2_end = &self.raw_points[fx.k2.from_index];
                     let event = SegmentEvent::New2(start.clone(), fx1_end.clone(), fx2_end.clone());
                     println!("{}", event);
-                    self.w1.clear();
+                    //self.w1.clear();
                     self.w2.clear();
                     self.need_w2 = false;
                     let _ = self.raw_points.drain(..fx.k2.from_index);
@@ -362,14 +362,23 @@ impl SegmentDetectorV2 {
     }
 
     fn recalc_seq1(&mut self) {
+        debug_assert!(self.w1.window.len() == 3);
+        let k2 = self.w1.window.get(-2).unwrap();
+        let k3 = self.w1.window.get(-1).unwrap();
+        if k2.to_index >= k3.from_index {
+            print_flush!("k2: from:{} to:{} k3 from:{} to:{}\n", k2.from_index, k2.to_index, k3.from_index, k3.to_index);
+        }
+        debug_assert!(k2.from_index < k3.from_index);
+        //debug_assert!(k2.to_index < k3.from_index);
         self.w1.clear();
-        for index in 1..self.raw_points.len(){
+        
+        /*for index in 1..self.raw_points.len(){
             if index % 2 == 0 {
                 let from = &self.raw_points[index - 1];
                 let to = &self.raw_points[index];
                 self.w1.push(Seq::new(index - 1, from, to));
             }
-        }
+        }*/
     }
 
     fn recalc_seq2(&mut self) {

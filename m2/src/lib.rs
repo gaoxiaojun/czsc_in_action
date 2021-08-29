@@ -7,6 +7,7 @@ pub mod analyzer;
 //mod smain;
 //mod sd100;
 mod sd;
+mod sd2;
 //mod sequence;
 mod seq;
 mod fx_detector;
