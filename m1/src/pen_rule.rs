@@ -1,5 +1,7 @@
+//! 笔规则处理
+
 use common::fx::{FxType, Fx};
-// 集中笔规则处理
+
 pub fn detect_is_pen(f1: &Fx, f2: &Fx) -> bool {
     if f1.fx_type == FxType::Top
         && f2.fx_type == FxType::Bottom
@@ -40,19 +42,22 @@ pub enum MergeAction {
 }
 
 // 同类分型合并规则
-pub fn merge_same_fx_type(f1: &Fx, f2: &Fx) -> MergeAction {
-    debug_assert!(f1.fx_type == f2.fx_type);
-    if f1.fx_type == FxType::Top {
-        if f1.price > f2.price {
-            MergeAction::Keep
-        } else {
+// 考虑一种特殊情况就是顶分型高点相等或者底分型低点相等
+// 处理原则：分型极值点相等不算，必须突破才算
+// 也就是说，后分型必须突破前分型才能采用后分型
+pub fn merge_same_fx_type(prev: &Fx, next: &Fx) -> MergeAction {
+    debug_assert!(prev.fx_type == next.fx_type);
+    if prev.fx_type == FxType::Top {
+        if next.price > prev.price {
             MergeAction::Replace
+        } else {
+            MergeAction::Keep
         }
     } else {
-        if f1.price < f2.price {
-            MergeAction::Keep
-        } else {
+        if next.price < prev.price {
             MergeAction::Replace
+        } else {
+            MergeAction::Keep
         }
     }
 }

@@ -4,7 +4,5 @@ members = [
     "plot",
     "common",
     "m0",
-    "m1",
-    "m2",
-    "plot"
+    "m1"
 ]

@@ -8,7 +8,6 @@ common = { path = "../common" }
 plot = { path = "../plot" }
 m0 = { path = "../m0" }
 m1 = { path = "../m1" }
-m2 = { path = "../m2" }
 structopt = "0.3"
 colored = "2"
 rust_decimal="1.15.0"

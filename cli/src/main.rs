@@ -16,7 +16,7 @@ fn main() {
     let bars = load_eurusd_2021_05_06();
     let mut fd = m0::analyzer::Analyzer::new();
     let mut pd = m1::analyzer::Analyzer::new();
-    let mut sd = m2::analyzer::Analyzer::new();
+    //let mut sd = m2::analyzer::Analyzer::new();
     let mut segs: Vec<Point> = Vec::new();
     let mut pens: Vec<Point> = Vec::new();
 
@@ -42,7 +42,7 @@ fn main() {
                     }
                 }
 
-                let seg_event = sd.on_new_pen_event(pe);
+                /*let seg_event = sd.on_new_pen_event(pe);
                 match seg_event {
                     None => {}
                     Some(e) => match e {
@@ -60,11 +60,12 @@ fn main() {
                             segs.push(p1);
                         }
                     },
-                }
+                }*/
             }
         }
     }
 
+    print!("PenCount:{}", pens.len());
     if opt.display {
         TVPlot::new()
             .add_bar_series(&bars)

@@ -4,7 +4,8 @@
 //! 笔的判别是缠论中争议特别多的地方之一
 //! 本判别规则根据以下两个总原则构建
 //! 1. 必须当下可以判断，不能回退修正原有的笔判断结果
-//! 2. 不允许次高次低成笔（待商榷)
+//! 2. 不允许次高次低成笔
+//! 3. 成笔规则参考旧笔，严格执行顶(底)分型+中间K+底(顶)分型模式
 
 use crate::pen_rule::{self, MergeAction};
 use common::event::PenEvent;
@@ -58,6 +59,7 @@ use common::ringbuffer::RingBuffer;
 //  3.2.2.2如果保留B，抛弃C，转state3
 
 // state 4
+// 本状态是为了解决不允许次高次低成笔
 // +---+-4-+---+                    +---+-4-+---+       +---3---+
 // | A | B | C |<-----D     =====>  | A | B |C/D|   or  | A |B/D|
 // +---+---+---+                    +---+---+---+       +---+---+
@@ -69,7 +71,7 @@ use common::ringbuffer::RingBuffer;
 // 4.1.2 如果保留C，抛弃D，转state4
 // 4.2 CD不同类-----去掉C，按同类合并规则处理BD
 // 4.2.1 如果保留B,保留C，转state4
-// 4.2.2 如果保留D，emit UpdateTo(D)，转state3
+// 4.2.2 如果保留D，去掉B和C，emit UpdateTo(D)，转state3
 
 // 关于分型有效性的问题
 // 1. 分型包含
@@ -89,7 +91,6 @@ use common::ringbuffer::RingBuffer;
 // 按照缠论从A0(1分钟)开始做推笔，线段才是最基本的构件
 // 非完美的笔对线段没有影响
 
-// TODO:考虑一种特殊情况就是顶分型高点相等或者底分型低点相等
 #[derive(Debug)]
 pub struct PenDetector {
     window: RingBuffer<Fx>,
